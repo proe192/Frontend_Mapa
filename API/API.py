@@ -89,17 +89,15 @@ def dijkstra(origen_idx, destino_idx):
     }
 
 # --------------------------------------------------
-# ENDPOINTS (comienzan aquí)
+# ENDPOINTS
 # --------------------------------------------------
 
 @app.route('/')
 def home():
-    """Endpoint raíz para verificar que la API está funcionando"""
     return "API de Rutas Quetzaltenango - USAC está en funcionamiento"
 
 @app.route('/api/lugares', methods=['GET'])
 def get_lugares():
-    """Devuelve la lista de todos los lugares disponibles"""
     return jsonify({
         "success": True,
         "count": len(LUGARES),
@@ -108,11 +106,6 @@ def get_lugares():
 
 @app.route('/api/conectividad', methods=['GET'])
 def verificar_conectividad():
-    """
-    Verifica si existe un camino entre dos lugares
-    Parámetros: origen, destino
-    Ejemplo: /api/conectividad?origen=USAC&destino=ParqueCentral
-    """
     origen = request.args.get('origen')
     destino = request.args.get('destino')
     
@@ -132,7 +125,7 @@ def verificar_conectividad():
             "conectado": bool(matriz_conectividad[i][j]),
             "origen": origen,
             "destino": destino,
-            "conexion_directa": bool(MATRIZ_ADY[i][j])  # Si es conexión directa
+            "conexion_directa": bool(MATRIZ_ADY[i][j])
         })
         
     except ValueError:
@@ -143,11 +136,6 @@ def verificar_conectividad():
 
 @app.route('/api/camino-minimo', methods=['GET'])
 def encontrar_camino_minimo():
-    """
-    Calcula la ruta más corta entre dos lugares
-    Parámetros: origen, destino
-    Ejemplo: /api/camino-minimo?origen=USAC&destino=ParqueCentral
-    """
     origen = request.args.get('origen')
     destino = request.args.get('destino')
     
@@ -184,9 +172,6 @@ def encontrar_camino_minimo():
 
 @app.route('/api/matrices', methods=['GET'])
 def get_matrices():
-    """
-    Devuelve las matrices completas (para debugging)
-    """
     return jsonify({
         "success": True,
         "lugares": LUGARES,
@@ -195,11 +180,28 @@ def get_matrices():
         "matriz_conectividad": warshall(MATRIZ_ADY).tolist()
     })
 
+@app.route('/api/conexiones', methods=['GET'])
+def get_conexiones():
+    """Nuevo endpoint para extraer conexiones"""
+    conn = mysql.connector.connect(**DB_CONFIG)
+    cursor = conn.cursor(dictionary=True)
+    
+    cursor.execute("SELECT origen, destino, distancia_km, adyacente FROM distancias_adyacencia")
+    data = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    return jsonify({
+        "success": True,
+        "count": len(data),
+        "data": data
+    })
+
 # --------------------------------------------------
-# Inicialización y ejecución
+# Inicialización
 # --------------------------------------------------
 
-# Cargar datos al iniciar
 cargar_datos()
 
 if __name__ == '__main__':
