@@ -1,3 +1,4 @@
+
 import flet as ft
 import requests
 import networkx as nx
@@ -5,7 +6,7 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 import base64
 import matplotlib
-matplotlib.use('Agg')  # Para evitar problemas de hilos con matplotlib
+matplotlib.use('Agg')
 
 class FletGrafoApp:
     def __init__(self, page: ft.Page):
@@ -152,6 +153,7 @@ class FletGrafoApp:
         self.txt_camino.value = ""
         self.page.update()
 
+
     def _get_node_positions(self):
         if self._node_positions is None and self.grafo_completo:
             self._node_positions = {
@@ -165,7 +167,7 @@ class FletGrafoApp:
                 "seminario san jose": (0.32, 0.53),
                 "paseo luna": (0.21, 1.15),
                 "salon comunal": (0.27, 1.26),
-                "Xelapan los trigales": (0.53, 1.03),
+                "Xelapan los trigales": (0.53, 1.10),
                 "Monumento a Tecun uman": (0.53, 0.95),
                 "pradera xela": (0.43, 0.53),
                 "Xelapan los altos": (0.55, 0.59),
@@ -187,13 +189,9 @@ class FletGrafoApp:
                 "Parque Colonia Molina": (0.97, 0.31),
                 "VFH6+H74 Aldea Justo Rufino Barrios": (0.10, 0.60)
             }
-            
-            # Verificar que todos los nodos del grafo tengan posición
             for node in self.grafo_completo.nodes():
                 if node not in self._node_positions:
-                    print(f"Advertencia: No se encontró posición para el nodo {node} - Asignando posición default")
                     self._node_positions[node] = (0.5, 0.5)
-                    
         return self._node_positions
 
     def dibujar_grafo_con_ruta(self, camino=None):
@@ -201,37 +199,27 @@ class FletGrafoApp:
             self.mostrar_mensaje("Grafo no disponible", "red")
             return
 
-        plt.figure(figsize=(14, 10))
+        plt.figure(figsize=(20, 16))
         plt.clf()
         pos = self._get_node_positions()
-        
-        # Dibujar todos los nodos y aristas
-        nx.draw_networkx_nodes(self.grafo_completo, pos, node_size=800, node_color="lightblue", alpha=0.9, edgecolors="blue", linewidths=1)
-        nx.draw_networkx_labels(self.grafo_completo, pos, font_size=8, font_weight="bold", font_color="darkblue", bbox=dict(alpha=0))
-        
-        # Dibujar aristas con transparencia
-        nx.draw_networkx_edges(self.grafo_completo, pos, edge_color="gray", arrows=True, 
-                             arrowstyle="->", arrowsize=10, width=1.0, alpha=0.5)
-        
-        # Dibujar etiquetas de distancia solo para las aristas visibles
+          #modificar aqui
+        nx.draw_networkx_nodes(self.grafo_completo, pos, node_size=3500, node_color="lightgreen", alpha=0.9, edgecolors="blue", linewidths=1)
+        nx.draw_networkx_labels(self.grafo_completo, pos, font_size=12, font_weight="bold", font_color="black", bbox=dict(alpha=0))
+        nx.draw_networkx_edges(self.grafo_completo, pos, edge_color="gray", arrows=True, arrowstyle="->", arrowsize=10, width=1.0, alpha=0.5)
+
         edge_labels = {}
         for edge in self.grafo_completo.edges():
             if abs(pos[edge[0]][0] - pos[edge[1]][0]) < 0.5 and abs(pos[edge[0]][1] - pos[edge[1]][1]) < 0.5:
                 edge_labels[edge] = self.grafo_completo.edges[edge]['weight']
-        
-        nx.draw_networkx_edge_labels(self.grafo_completo, pos, edge_labels=edge_labels, 
-                                   font_size=7, label_pos=0.5, bbox=dict(facecolor="white", alpha=0.6, edgecolor="none"))
+        nx.draw_networkx_edge_labels(self.grafo_completo, pos, edge_labels=edge_labels, font_size=7, label_pos=0.5, bbox=dict(facecolor="white", alpha=0.6, edgecolor="none"))
 
-        # Resaltar la ruta si existe
         if camino and len(camino) > 1:
             edges = [(camino[i], camino[i+1]) for i in range(len(camino)-1)]
-            nx.draw_networkx_nodes(self.grafo_completo, pos, nodelist=camino, node_size=1000, 
-                                 node_color="skyblue", edgecolors="darkblue", linewidths=2)
-            nx.draw_networkx_edges(self.grafo_completo, pos, edgelist=edges, edge_color="red", 
-                                 width=2.5, arrows=True, arrowstyle="->", arrowsize=15)
+            nx.draw_networkx_nodes(self.grafo_completo, pos, nodelist=camino, node_size=1500, node_color="lightgreen", edgecolors="darkblue", linewidths=2)
+            nx.draw_networkx_edges(self.grafo_completo, pos, edgelist=edges, edge_color="red", width=2.5, arrows=True, arrowstyle="->", arrowsize=15)
 
-        plt.xlim(-0.05, 1.05)
-        plt.ylim(-0.05, 1.15)
+        plt.xlim(-0.1, 1.1)
+        plt.ylim(-0.1, 1.4)
         plt.axis('off')
         plt.tight_layout()
         self.mostrar_grafo_en_ui()
@@ -240,11 +228,10 @@ class FletGrafoApp:
         if not self.grafo_completo:
             return
 
-        plt.figure(figsize=(14, 10))
+        plt.figure(figsize=(20, 16))
         plt.clf()
         pos = self._get_node_positions()
-        
-        # Colores para nodos: verde=origen, rojo=destino, azul=otros
+
         node_colors = []
         for n in self.grafo_completo.nodes():
             if n == resaltar_origen:
@@ -252,32 +239,25 @@ class FletGrafoApp:
             elif n == resaltar_destino:
                 node_colors.append("red")
             else:
-                node_colors.append("lightblue")
-                
-        nx.draw_networkx_nodes(self.grafo_completo, pos, node_size=800, node_color=node_colors, 
-                             alpha=0.9, edgecolors="blue", linewidths=1)
-        nx.draw_networkx_labels(self.grafo_completo, pos, font_size=8, font_weight="bold", 
-                              font_color="darkblue", bbox=dict(alpha=0))
-        
-        # Dibujar solo aristas visibles (evitar líneas largas cruzando el gráfico)
+                node_colors.append("lightgreen")
+              #modificacion aqui
+        nx.draw_networkx_nodes(self.grafo_completo, pos, node_size=3500, node_color=node_colors, alpha=0.9, edgecolors="blue", linewidths=1)
+        nx.draw_networkx_labels(self.grafo_completo, pos, font_size=12, font_weight="bold", font_color="black", bbox=dict(alpha=0))
+
         visible_edges = []
         for edge in self.grafo_completo.edges():
             if abs(pos[edge[0]][0] - pos[edge[1]][0]) < 0.5 and abs(pos[edge[0]][1] - pos[edge[1]][1]) < 0.5:
                 visible_edges.append(edge)
-        
-        nx.draw_networkx_edges(self.grafo_completo, pos, edgelist=visible_edges, edge_color="gray", 
-                             arrows=True, arrowstyle="->", arrowsize=10, width=1.5, alpha=0.7)
-        
-        # Etiquetas de distancia solo para aristas visibles
+
+        nx.draw_networkx_edges(self.grafo_completo, pos, edgelist=visible_edges, edge_color="gray", arrows=True, arrowstyle="->", arrowsize=10, width=1.5, alpha=0.7)
+
         edge_labels = {}
         for edge in visible_edges:
             edge_labels[edge] = self.grafo_completo.edges[edge]['weight']
-            
-        nx.draw_networkx_edge_labels(self.grafo_completo, pos, edge_labels=edge_labels, 
-                                   font_size=7, label_pos=0.5, bbox=dict(facecolor="white", alpha=0.6, edgecolor="none"))
+        nx.draw_networkx_edge_labels(self.grafo_completo, pos, edge_labels=edge_labels, font_size=7, label_pos=0.5, bbox=dict(facecolor="white", alpha=0.6, edgecolor="none"))
 
-        plt.xlim(-0.05, 1.05)
-        plt.ylim(-0.05, 1.15)
+        plt.xlim(-0.1, 1.1)
+        plt.ylim(-0.1, 1.4)
         plt.axis('off')
         plt.tight_layout()
         self.mostrar_grafo_en_ui()
